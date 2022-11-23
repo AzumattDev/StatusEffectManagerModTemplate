@@ -90,6 +90,9 @@
         <Reference Include="UnityEngine.IMGUIModule">
             <HintPath>$(GamePath)\unstripped_corlib\UnityEngine.IMGUIModule.dll</HintPath>
         </Reference>
+        <Reference Include="UnityEngine.ParticleSystemModule">
+          <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\Valheim\unstripped_corlib\UnityEngine.ParticleSystemModule.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine.PhysicsModule">
             <HintPath>$(GamePath)\unstripped_corlib\UnityEngine.PhysicsModule.dll</HintPath>
         </Reference>
