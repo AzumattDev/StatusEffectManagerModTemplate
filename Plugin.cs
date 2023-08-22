@@ -1,9 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using JetBrains.Annotations;
 using LocalizationManager;
 using StatusEffectManager;
 using ServerSync;
@@ -40,38 +42,37 @@ namespace StatusEffectManagerModTemplate
             mycooleffect.Name.English("Toxicity");
             mycooleffect.Type = EffectType.Consume;
             mycooleffect.IconSprite = null;
-            mycooleffect.Name.German("Toxizität"); 
+            mycooleffect.Name.German("Toxizität");
             mycooleffect.Effect.m_startMessageType = MessageHud.MessageType.TopLeft;
-            mycooleffect.Effect.m_startMessage = "My Cool Status Effect Started"; 
+            mycooleffect.Effect.m_startMessage = "My Cool Status Effect Started";
             mycooleffect.Effect.m_stopMessageType = MessageHud.MessageType.TopLeft;
-            mycooleffect.Effect.m_stopMessage = "Not cool anymore, ending effect."; 
-            mycooleffect.Effect.m_tooltip = "<color=orange>Toxic damage over time</color>"; 
+            mycooleffect.Effect.m_stopMessage = "Not cool anymore, ending effect.";
+            mycooleffect.Effect.m_tooltip = "<color=orange>Toxic damage over time</color>";
             mycooleffect.AddSEToPrefab(mycooleffect, "SwordIron");
-            
+
             CustomSE drunkeffect = new("se_drunk", "se_drunk_effect");
-			drunkeffect.Name.English("Drunk"); // You can use this to fix the display name in code
-			drunkeffect.Icon = "DrunkIcon.png"; // Use this to add an icon (64x64) for the status effect. Put your icon in an "icons" folder
-			drunkeffect.Name.German("Betrunken"); // Or add translations for other languages
-			drunkeffect.Effect.m_startMessageType = MessageHud.MessageType.Center; // Specify where the start effect message shows
-			drunkeffect.Effect.m_startMessage = "I'm drunk!"; // What the start message says
-			drunkeffect.Effect.m_stopMessageType = MessageHud.MessageType.Center; // Specify where the stop effect message shows
-			drunkeffect.Effect.m_stopMessage = "Sober...again."; // What the stop message says
-			drunkeffect.Effect.m_tooltip = "<color=red>Your vision is blurry</color>"; // Tooltip that will describe the effect applied to the player
-			drunkeffect.AddSEToPrefab(drunkeffect, "TankardAnniversary"); // Adds the status effect to the Anniversary Tankard. Applies when equipped.
-			
-			// Create a new status effect in code and apply it to a prefab.
-			CustomSE codeSE = new("CodeStatusEffect");
-			codeSE.Name.English("New Effect");
-			codeSE.Type = EffectType.Consume; // Set the type of status effect this should be.
-			codeSE.Icon = "ModDevPower.png";
-			codeSE.Name.German("Betrunken"); // Or add translations for other languages
-			codeSE.Effect.m_startMessageType = MessageHud.MessageType.Center; // Specify where the start effect message shows
-			codeSE.Effect.m_startMessage = "Mod Dev power, granted."; // What the start message says
-			codeSE.Effect.m_stopMessageType = MessageHud.MessageType.Center; // Specify where the stop effect message shows
-			codeSE.Effect.m_stopMessage = "Mod Dev power, removed."; // What the stop message says
-			codeSE.Effect.m_tooltip = "<color=green>You now have Mod Dev POWER!</color>"; // Tooltip that will describe the effect applied to the player
-			codeSE.AddSEToPrefab(codeSE, "SwordCheat"); // Adds the status effect to the Cheat Sword. Applies when equipped.
-		
+            drunkeffect.Name.English("Drunk"); // You can use this to fix the display name in code
+            drunkeffect.Icon = "DrunkIcon.png"; // Use this to add an icon (64x64) for the status effect. Put your icon in an "icons" folder
+            drunkeffect.Name.German("Betrunken"); // Or add translations for other languages
+            drunkeffect.Effect.m_startMessageType = MessageHud.MessageType.Center; // Specify where the start effect message shows
+            drunkeffect.Effect.m_startMessage = "I'm drunk!"; // What the start message says
+            drunkeffect.Effect.m_stopMessageType = MessageHud.MessageType.Center; // Specify where the stop effect message shows
+            drunkeffect.Effect.m_stopMessage = "Sober...again."; // What the stop message says
+            drunkeffect.Effect.m_tooltip = "<color=red>Your vision is blurry</color>"; // Tooltip that will describe the effect applied to the player
+            drunkeffect.AddSEToPrefab(drunkeffect, "TankardAnniversary"); // Adds the status effect to the Anniversary Tankard. Applies when equipped.
+
+            // Create a new status effect in code and apply it to a prefab.
+            CustomSE codeSE = new("CodeStatusEffect");
+            codeSE.Name.English("New Effect");
+            codeSE.Type = EffectType.Consume; // Set the type of status effect this should be.
+            codeSE.Icon = "ModDevPower.png";
+            codeSE.Name.German("Betrunken"); // Or add translations for other languages
+            codeSE.Effect.m_startMessageType = MessageHud.MessageType.Center; // Specify where the start effect message shows
+            codeSE.Effect.m_startMessage = "Mod Dev power, granted."; // What the start message says
+            codeSE.Effect.m_stopMessageType = MessageHud.MessageType.Center; // Specify where the stop effect message shows
+            codeSE.Effect.m_stopMessage = "Mod Dev power, removed."; // What the stop message says
+            codeSE.Effect.m_tooltip = "<color=green>You now have Mod Dev POWER!</color>"; // Tooltip that will describe the effect applied to the player
+            codeSE.AddSEToPrefab(codeSE, "SwordCheat"); // Adds the status effect to the Cheat Sword. Applies when equipped.
 
 
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -141,7 +142,23 @@ namespace StatusEffectManagerModTemplate
 
         private class ConfigurationManagerAttributes
         {
-            public bool? Browsable = false;
+            [UsedImplicitly] public int? Order = null!;
+            [UsedImplicitly] public bool? Browsable = null!;
+            [UsedImplicitly] public string? Category = null!;
+            [UsedImplicitly] public Action<ConfigEntryBase>? CustomDrawer = null!;
+        }
+
+        class AcceptableShortcuts : AcceptableValueBase
+        {
+            public AcceptableShortcuts() : base(typeof(KeyboardShortcut))
+            {
+            }
+
+            public override object Clamp(object value) => value;
+            public override bool IsValid(object value) => true;
+
+            public override string ToDescriptionString() =>
+                "# Acceptable values: " + string.Join(", ", UnityInput.Current.SupportedKeyCodes);
         }
 
         #endregion
