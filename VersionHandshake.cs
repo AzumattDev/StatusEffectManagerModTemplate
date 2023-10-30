@@ -23,7 +23,6 @@ namespace StatusEffectManagerModTemplate
             StatusEffectManagerModTemplatePlugin.StatusEffectManagerModTemplateLogger.LogInfo("Invoking version check");
             ZPackage zpackage = new();
             zpackage.Write(StatusEffectManagerModTemplatePlugin.ModVersion);
-            zpackage.Write(RpcHandlers.ComputeHashForMod().Replace("-", ""));
             peer.m_rpc.Invoke($"{StatusEffectManagerModTemplatePlugin.ModName}_VersionCheck", zpackage);
         }
     }
@@ -69,8 +68,7 @@ namespace StatusEffectManagerModTemplate
         {
             if (!__instance.IsServer()) return;
             // Remove peer from validated list
-            StatusEffectManagerModTemplatePlugin.StatusEffectManagerModTemplateLogger.LogInfo(
-                $"Peer ({peer.m_rpc.m_socket.GetHostName()}) disconnected, removing from validated list");
+            StatusEffectManagerModTemplatePlugin.StatusEffectManagerModTemplateLogger.LogInfo($"Peer ({peer.m_rpc.m_socket.GetHostName()}) disconnected, removing from validated list");
             _ = RpcHandlers.ValidatedPeers.Remove(peer.m_rpc);
         }
     }
@@ -82,15 +80,12 @@ namespace StatusEffectManagerModTemplate
         public static void RPC_StatusEffectManagerModTemplate_Version(ZRpc rpc, ZPackage pkg)
         {
             string? version = pkg.ReadString();
-            string? hash = pkg.ReadString();
-
-            var hashForAssembly = ComputeHashForMod().Replace("-", "");
             StatusEffectManagerModTemplatePlugin.StatusEffectManagerModTemplateLogger.LogInfo("Version check, local: " +
                                                                                               StatusEffectManagerModTemplatePlugin.ModVersion +
                                                                                               ",  remote: " + version);
-            if (hash != hashForAssembly || version != StatusEffectManagerModTemplatePlugin.ModVersion)
+            if (version != StatusEffectManagerModTemplatePlugin.ModVersion)
             {
-                StatusEffectManagerModTemplatePlugin.ConnectionError = $"{StatusEffectManagerModTemplatePlugin.ModName} Installed: {StatusEffectManagerModTemplatePlugin.ModVersion} {hashForAssembly}\n Needed: {version} {hash}";
+                StatusEffectManagerModTemplatePlugin.ConnectionError = $"{StatusEffectManagerModTemplatePlugin.ModName} Installed: {StatusEffectManagerModTemplatePlugin.ModVersion}\n Needed: {version}";
                 if (!ZNet.instance.IsServer()) return;
                 // Different versions - force disconnect client from server
                 StatusEffectManagerModTemplatePlugin.StatusEffectManagerModTemplateLogger.LogWarning($"Peer ({rpc.m_socket.GetHostName()}) has incompatible version, disconnecting...");
@@ -112,21 +107,6 @@ namespace StatusEffectManagerModTemplate
                     ValidatedPeers.Add(rpc);
                 }
             }
-        }
-
-        public static string ComputeHashForMod()
-        {
-            using SHA256 sha256Hash = SHA256.Create();
-            // ComputeHash - returns byte array  
-            byte[] bytes = sha256Hash.ComputeHash(File.ReadAllBytes(Assembly.GetExecutingAssembly().Location));
-            // Convert byte array to a string   
-            StringBuilder builder = new();
-            foreach (byte b in bytes)
-            {
-                builder.Append(b.ToString("X2"));
-            }
-
-            return builder.ToString();
         }
     }
 }
