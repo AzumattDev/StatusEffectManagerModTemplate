@@ -23,10 +23,12 @@ public enum CraftingTable
 	Inventory,
 	[InternalName("piece_workbench")] Workbench,
 	[InternalName("piece_cauldron")] Cauldron,
+	[InternalName("piece_MeadCauldron")] MeadCauldron,
 	[InternalName("forge")] Forge,
 	[InternalName("piece_artisanstation")] ArtisanTable,
 	[InternalName("piece_stonecutter")] StoneCutter,
 	[InternalName("piece_magetable")] MageTable,
+	[InternalName("piece_preptable")] PrepTable,
 	[InternalName("blackforge")] BlackForge,
 	Custom,
 }
@@ -1041,7 +1043,7 @@ public class Item
 	[HarmonyPriority(Priority.Last)]
 	internal static void Patch_ObjectDBInit(ObjectDB __instance)
 	{
-		if (__instance.GetItemPrefab("Wood") == null)
+		if (__instance.GetItemPrefab("YagluthDrop") == null)
 		{
 			return;
 		}
@@ -1383,7 +1385,7 @@ public class Item
 		}
 	}
 
-	private static bool CheckItemIsUpgrade(InventoryGui gui) => gui.m_selectedRecipe.Value?.m_quality > 0;
+	private static bool CheckItemIsUpgrade(InventoryGui gui) => gui.m_selectedRecipe.ItemData?.m_quality > 0;
 
 	internal static IEnumerable<CodeInstruction> Transpile_InventoryGui(IEnumerable<CodeInstruction> instructions)
 	{
@@ -1549,7 +1551,7 @@ public class Item
 
 			GUILayout.Label("Chance: ");
 			float chance = drop.chance;
-			if (float.TryParse(GUILayout.TextField((chance * 100).ToString(CultureInfo.InvariantCulture), new GUIStyle(GUI.skin.textField) { fixedWidth = 45 }), out float newChance) && !Mathf.Approximately(newChance / 100, chance) && !locked)
+			if (float.TryParse(GUILayout.TextField((chance * 100).ToString(CultureInfo.InvariantCulture), new GUIStyle(GUI.skin.textField) { fixedWidth = 45 }), NumberStyles.Float, CultureInfo.InvariantCulture, out float newChance) && !Mathf.Approximately(newChance / 100, chance) && !locked)
 			{
 				chance = newChance / 100;
 				wasUpdated = true;
@@ -1803,7 +1805,11 @@ public class LocalizeKey
 	public readonly string Key;
 	public readonly Dictionary<string, string> Localizations = new();
 
-	public LocalizeKey(string key) => Key = key.Replace("$", "");
+	public LocalizeKey(string key)
+	{
+		Key = key.Replace("$", "");
+		keys.Add(this);
+	}
 
 	public void Alias(string alias)
 	{
@@ -1813,7 +1819,10 @@ public class LocalizeKey
 			alias = $"${alias}";
 		}
 		Localizations["alias"] = alias;
-		Localization.instance.AddWord(Key, Localization.instance.Localize(alias));
+		if (Localization.m_instance != null)
+		{
+			Localization.instance.AddWord(Key, Localization.instance.Localize(alias));
+		}
 	}
 
 	public LocalizeKey English(string key) => addForLang("English", key);
@@ -1854,14 +1863,18 @@ public class LocalizeKey
 	private LocalizeKey addForLang(string lang, string value)
 	{
 		Localizations[lang] = value;
-		if (Localization.instance.GetSelectedLanguage() == lang)
+		if (Localization.m_instance != null)
 		{
-			Localization.instance.AddWord(Key, value);
+			if (Localization.instance.GetSelectedLanguage() == lang)
+			{
+				Localization.instance.AddWord(Key, value);
+			}
+			else if (lang == "English" && !Localization.instance.m_translations.ContainsKey(Key))
+			{
+				Localization.instance.AddWord(Key, value);
+			}
 		}
-		else if (lang == "English" && !Localization.instance.m_translations.ContainsKey(Key))
-		{
-			Localization.instance.AddWord(Key, value);
-		}
+
 		return this;
 	}
 
@@ -1876,7 +1889,7 @@ public class LocalizeKey
 			}
 			else if (key.Localizations.TryGetValue("alias", out string alias))
 			{
-				Localization.instance.AddWord(key.Key, Localization.instance.Localize(alias));
+				__instance.AddWord(key.Key, Localization.instance.Localize(alias));
 			}
 		}
 	}
@@ -2021,7 +2034,7 @@ public static class PrefabManager
 			RegisterStatusEffect(shared.m_setStatusEffect);
 		}
 
-		__instance.UpdateItemHashes();
+		__instance.UpdateRegisters();
 	}
 
 	[HarmonyPriority(Priority.VeryHigh)]
@@ -2072,4 +2085,9 @@ public class Conversion
 	{
 		outputItem.Conversions.Add(this);
 	}
+}
+
+public static class ItemManagerVersion
+{
+	public const string Version = "1.2.9";
 }
